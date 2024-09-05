@@ -2,7 +2,7 @@ import { useTheme } from "@react-navigation/native";
 import React from "react";
 import { Dimensions, Modal, Platform, Pressable, Text, TouchableOpacity, View } from "react-native";
 
-import { Calendar, X } from "lucide-react-native";
+import {Calendar, CirclePlus, FileText, X} from "lucide-react-native";
 
 import Reanimated, {
   Easing,
@@ -15,22 +15,30 @@ import Reanimated, {
 
 import RNDateTimePicker from "@react-native-community/datetimepicker";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import PapillonContextMenu from "@/components/Global/PapillonContextMenu";
+import {NativeText} from "@/components/Global/NativeComponents";
 
 interface HeaderCalendarProps {
   index: number,
   changeIndex: (index: number) => unknown,
   getDateFromIndex: (index: number) => Date
-  showPicker: () => void
+  showPicker: () => void,
+  navigation: any
 }
 
 const HeaderCalendar: React.FC<HeaderCalendarProps> = ({
   index,
   changeIndex,
   getDateFromIndex,
-  showPicker
+  showPicker,
+  navigation
 }) => {
   const dims = Dimensions.get("window");
   const tablet = dims.width > 600;
+  const { colors } = useTheme();
+  const theme = useTheme();
+
+  const [shouldOpenContextMenu, setShouldOpenContextMenu] = React.useState(false);
 
   return (
     <Reanimated.View
@@ -50,12 +58,95 @@ const HeaderCalendar: React.FC<HeaderCalendarProps> = ({
         }}
       >
         {[-2, -1, 0, 1, 2].map((offsetIndex) => (
-          <HeaderDateComponent
-            key={index + offsetIndex}
-            active={offsetIndex === 0}
-            date={getDateFromIndex(index + offsetIndex)}
-            onPress={() => offsetIndex === 0 ? showPicker() : changeIndex(index + offsetIndex)}
-          />
+          <View>
+            <HeaderDateComponent
+              key={index + offsetIndex}
+              active={offsetIndex === 0}
+              date={getDateFromIndex(index + offsetIndex)}
+              onPress={() => offsetIndex === 0 ? showPicker() : changeIndex(index + offsetIndex)}
+              onLongPress={() => offsetIndex === 0 ? setShouldOpenContextMenu(true) : null}
+            />
+            <PapillonContextMenu
+              shouldOpenContextMenu={offsetIndex === 0 ? shouldOpenContextMenu: false}
+              setShouldOpenContextMenu={setShouldOpenContextMenu}
+            >
+              <Pressable
+                onPress={() => {
+                  setShouldOpenContextMenu(false);
+                }}
+                style={({ pressed }) => [
+                  {
+                    backgroundColor: pressed ? "rgba(0, 0, 0, 0.1)" : "rgba(0, 0, 0, 0)", // Utilisation de rgba pour l'assombrissement
+                    opacity: 0.4,
+                  },
+                ]}
+                disabled={true}
+              >
+                <View
+                  style={{
+                    flexDirection: "row",
+                    padding: 9,
+                    borderStyle: "solid",
+                    borderBottomColor: colors.border,
+                    borderBottomWidth: 2,
+                    borderColor: theme.dark ? "#ffffff20" :"#00000020",
+                    alignItems: "center",
+                    gap: 10,
+                  }}
+                >
+                  <Calendar
+                    size={26}
+                    color={colors.text}
+                  />
+                  <View style={{flex: 1}}>
+                    <NativeText variant={"overtitle"}>
+                      Ajouter au calendrier
+                    </NativeText>
+                    <NativeText variant={"subtitle"}>
+                      Bientôt disponible
+                    </NativeText>
+                  </View>
+                </View>
+              </Pressable>
+              <Pressable
+                onPress={() => {
+                  setShouldOpenContextMenu(false);
+                  // @ts-expect-error : TODO: https://reactnavigation.org/docs/typescript/#specifying-default-types-for-usenavigation-link-ref-etc
+                  navigation.navigate("ServiceSelector");
+                }}
+                style={({ pressed }) => [
+                  {
+                    backgroundColor: pressed ? "rgba(0, 0, 0, 0.1)" : "rgba(0, 0, 0, 0)", // Utilisation de rgba pour l'assombrissement
+                  },
+                ]}
+              >
+                <View
+                  style={{
+                    flexDirection: "row",
+                    padding: 9,
+                    borderStyle: "solid",
+                    borderBottomColor: colors.border,
+                    borderColor: theme.dark ? "#ffffff20" :"#00000020",
+                    alignItems: "center",
+                    gap: 10,
+                  }}
+                >
+                  <FileText
+                    size={26}
+                    color={colors.text}
+                  />
+                  <View style={{flex: 1}}>
+                    <NativeText variant={"overtitle"}>
+                      Exporter en PDF
+                    </NativeText>
+                    <NativeText variant={"subtitle"}>
+                      Exporter le planning de la semaine en PDF
+                    </NativeText>
+                  </View>
+                </View>
+              </Pressable>
+            </PapillonContextMenu>
+          </View>
         ))}
       </Reanimated.View>
     </Reanimated.View>
@@ -66,12 +157,14 @@ interface HeaderDateComponentProps {
   date: Date,
   active: boolean,
   onPress?: () => unknown
+  onLongPress?: () => unknown
 }
 
 const HeaderDateComponent: React.FC<HeaderDateComponentProps> = ({
   date,
   active,
-  onPress
+  onPress,
+  onLongPress
 }) => {
   const { colors } = useTheme();
 
@@ -80,7 +173,7 @@ const HeaderDateComponent: React.FC<HeaderDateComponentProps> = ({
       // @ts-expect-error : average reanimated issue.
       layout={LinearTransition.duration(300).easing(Easing.bezier(0.5, 0, 0, 1))}
     >
-      <TouchableOpacity onPress={onPress}>
+      <TouchableOpacity onPress={onPress} onLongPress={onLongPress}>
         <Reanimated.View
           style={[
             {
@@ -178,7 +271,7 @@ const LessonsDateModal: React.FC<LessonsDateModalProps> = ({
         value={getDateFromIndex(currentPageIndex)}
         display={"calendar"}
         mode="date"
-        onChange={(event, selectedDate) => {
+        onChange={(_event, selectedDate) => {
           if (selectedDate) {
             const newPageIndex = Math.round((selectedDate.getTime() - defaultDate.getTime()) / 86400000);
             PagerRef.current?.setPage(newPageIndex);
@@ -287,7 +380,7 @@ const LessonsDateModal: React.FC<LessonsDateModalProps> = ({
               mode="date"
               locale="fr-FR"
               accentColor={colors.primary}
-              onChange={(event, selectedDate) => {
+              onChange={(_event, selectedDate) => {
                 if (selectedDate) {
                   const newPageIndex = Math.round((selectedDate.getTime() - defaultDate.getTime()) / 86400000);
                   PagerRef.current?.setPage(newPageIndex);

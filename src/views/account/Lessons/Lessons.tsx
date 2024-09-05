@@ -118,6 +118,7 @@ const Timetable: Screen<"Lessons"> = ({ navigation }) => {
           changeIndex={(index) => PagerRef.current?.setPage(index)}
           getDateFromIndex={getDateFromIndex}
           showPicker={() => setShowDatePicker(true)}
+          navigation={navigation}
         />
       ),
     });
