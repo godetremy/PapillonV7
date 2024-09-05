@@ -1,5 +1,5 @@
 import { useTheme } from "@react-navigation/native";
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { Image, Platform, RefreshControl as RNRefreshControl, Text, View } from "react-native";
 import { createNativeWrapper, ScrollView } from "react-native-gesture-handler";
 
@@ -158,7 +158,7 @@ const SeparatorCourse: React.FC<{
             top: "-20%",
             left: "-20%",
             width: "200%",
-            height: "200%",
+            height: "250%",
             opacity: 0.05,
           }}
         />
